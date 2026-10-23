@@ -124,6 +124,7 @@ async function call(body){
   const r=await fetch("/api/data",{method:body?"POST":"GET",headers:{"content-type":"application/json","x-pin":pin},body:body?JSON.stringify(body):undefined});
   if(r.status===401){showLock("That PIN didn’t work");throw new Error("401")}
   let j;try{j=await r.json()}catch(e){showLock("Server error ("+r.status+"). Check the database and PIN variables in Vercel, then redeploy.");throw e}
+  if(r.status>=500){showLock(j.error||"Server error");throw new Error(j.error)}
   if(!r.ok){toast(j.error||"Something went wrong");throw new Error(j.error)}
   $("lock").hidden=true;apply(j);return j;
 }
