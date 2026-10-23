@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Concert Fund Tracker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f6f3ff;--card:#fff;--ink:#1d1740;--mute:#6b6590;--line:#e4def7;--accent:#7c3aed;--accent2:#ec4899;--good:#10b981;--warn:#f59e0b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#120e26;--card:#1d1740;--ink:#f3f0ff;--mute:#a59fcf;--line:#322a63;--accent:#a78bfa;--accent2:#f472b6;--good:#34d399;--warn:#fbbf24}}
+:root[data-theme="dark"]{--bg:#120e26;--card:#1d1740;--ink:#f3f0ff;--mute:#a59fcf;--line:#322a63;--accent:#a78bfa;--accent2:#f472b6;--good:#34d399;--warn:#fbbf24}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
+main{max-width:640px;margin:0 auto;padding:16px 14px 60px}
+h1{font-size:1.6rem;margin:6px 0 2px}
+h2{font-size:1.1rem;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.hero{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0}
+.hero .big{font-size:2.6rem;font-weight:800;line-height:1}
+.hero small{opacity:.9}
+.bar{height:18px;border-radius:99px;background:rgba(255,255,255,.28);overflow:hidden;margin:12px 0 6px}
+.bar i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .8s cubic-bezier(.2,.9,.3,1)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:1.35rem}
+.stat span{color:var(--mute);font-size:.82rem}
+.need{border-color:var(--warn)}
+.msg{font-weight:600;margin:6px 0 0}
+.badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge{padding:5px 10px;border-radius:99px;font-size:.8rem;border:1px dashed var(--line);color:var(--mute)}
+.badge.on{background:var(--good);color:#06281c;border:1px solid var(--good);font-weight:700}
+label{display:block;font-size:.8rem;color:var(--mute);margin:8px 0 3px}
+input,select{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:1rem}
+.row{display:flex;gap:8px}.row>*{flex:1}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 14px;font-weight:700;background:var(--accent);color:#fff}
+button.big{width:100%;margin-top:12px;font-size:1.05rem;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line);padding:6px 10px;font-size:.85rem}
+.job,.com{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.job:first-of-type,.com:first-of-type{border-top:0}
+.job .t{flex:1}.job .t small{display:block;color:var(--mute)}
+.amt{font-weight:800;color:var(--good)}
+.com .t{flex:1;font-weight:600}
+.dots{display:flex;gap:4px;margin-top:4px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--line)}.dot.on{background:var(--good)}
+.chk{width:42px;height:42px;border-radius:50%;font-size:1.3rem;padding:0;background:var(--bg);color:var(--mute);border:2px solid var(--line)}
+.chk.on{background:var(--good);border-color:var(--good);color:#06281c}
+.empty,.note{color:var(--mute);text-align:center;padding:10px;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,120px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:99px;font-weight:700;transition:transform .35s;z-index:50;max-width:90%;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.bit{position:fixed;top:45%;left:50%;font-size:1.8rem;pointer-events:none;z-index:60;animation:fly 1.4s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
+.lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
+.lock .card{max-width:340px;width:100%;text-align:center}
+</style>
+</head>
+<body>
+<main>
+<h1>🎤 Concert Fund</h1>
+<p class="sub">ASAP Rocky · 9 December 2026 · every job gets you closer 🔥</p>
+
+<div class="card hero">
+  <small>Still to go</small>
+  <div class="big" id="left">$234.00</div>
+  <div class="bar"><i id="fill" style="width:0%"></i></div>
+  <small id="pct">0% paid back</small>
+  <p class="msg" id="cheer"></p>
+</div>
+
+<div class="grid" style="margin-bottom:14px">
+  <div class="stat"><b id="days">–</b><span>days left</span></div>
+  <div class="stat"><b>$234.00</b><span>original loan</span></div>
+  <div class="stat"><b id="paid">$0.00</b><span>paid back</span></div>
+  <div class="stat need"><b id="week">–</b><span>to earn per week</span></div>
+</div>
+<div class="card"><h2>🏅 Milestones</h2><div class="badges" id="badges"></div></div>
+
+<div class="card">
+  <h2>➕ Log a job</h2>
+  <label for="jt">What was done?</label>
+  <input id="jt" placeholder="e.g. Washed the car" maxlength="60">
+  <div class="row">
+    <div><label for="ja">Amount ($)</label><input id="ja" type="number" inputmode="decimal" min="0" step="0.5" placeholder="10"></div>
+    <div><label for="jd">Date</label><input id="jd" type="date"></div>
+  </div>
+  <label for="jk">Type</label>
+  <select id="jk"><option value="job">Job done (earned &amp; paid back)</option><option value="cash">Cash repayment</option></select>
+  <button class="big" id="add">Done! Add it 🎉</button>
+</div>
+
+<div class="card"><h2>💪 Commitments</h2>
+  <div id="coms"></div>
+  <div id="comEdit" hidden>
+    <div class="row" style="margin-top:10px"><input id="nc" placeholder="Add a new commitment" maxlength="60"><button id="addc" style="flex:0 0 auto">Add</button></div>
+  </div>
+  <div style="text-align:right;margin-top:8px"><button class="ghost" id="editBtn" hidden>✏️ Edit commitments</button></div>
+</div>
+
+<div class="card"><h2>🧾 Job history</h2><div id="jobs"></div></div>
+</main>
+<div class="toast" id="toast"></div>
+<div class="lock" id="lock" hidden><div class="card"><h1>🎤 Concert Fund</h1><p class="sub">Enter your PIN to get in</p><input id="pin" type="password" inputmode="text" autocomplete="current-password" placeholder="PIN"><p id="lockmsg" class="note" style="color:var(--accent2)"></p><button class="big" id="go">Let’s go</button></div></div>
+
+<script>
+const LOAN=234, DUE=new Date(2026,11,9);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>"$"+n.toFixed(2);
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const today=()=>ymd(new Date());
+let jobs=[],coms=[],checks=new Set(),editing=false,canEdit=false,pin=localStorage.getItem("cf_pin")||"",busy=false;
+const cheers=["You’re smashing it! 🚀","Every dollar counts — keep going! 💪","Look at that bar move! 🔥","Front row, here you come! 🎶","Proud of the effort! ⭐"];
+
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2600)}
+function burst(){const em=["🎉","⭐","💸","🎶","🔥","✨"];for(let i=0;i<34;i++){const s=document.createElement("span");s.className="bit";s.textContent=em[i%em.length];
+ s.style.setProperty("--x",(Math.random()*500-250)+"px");s.style.setProperty("--y",(Math.random()*-420-40)+"px");s.style.setProperty("--r",(Math.random()*720-360)+"deg");
+ document.body.appendChild(s);setTimeout(()=>s.remove(),1500)}}
+function daysLeft(){const t=new Date();t.setHours(0,0,0,0);return Math.round((DUE-t)/864e5)}
+
+function apply(s){jobs=s.jobs;coms=[...s.commitments].sort((a,b)=>a.order-b.order);checks=new Set(s.checkins);canEdit=s.role==="admin";render()}
+async function call(body){
+  const r=await fetch("/api/data",{method:body?"POST":"GET",headers:{"content-type":"application/json","x-pin":pin},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){showLock("That PIN didn’t work");throw new Error("401")}
+  const j=await r.json();if(!r.ok){toast(j.error||"Something went wrong");throw new Error(j.error)}
+  $("lock").hidden=true;apply(j);return j;
+}
+function showLock(m){$("lock").hidden=false;$("lockmsg").textContent=m||"";$("pin").value="";$("pin").focus()}
+$("go").onclick=async()=>{pin=$("pin").value.trim();if(!pin)return;try{await call();localStorage.setItem("cf_pin",pin)}catch(e){}};
+$("pin").onkeydown=e=>{if(e.key==="Enter")$("go").click()};
+
+function render(){
+  const paid=Math.min(LOAN,jobs.reduce((a,j)=>a+(+j.amount||0),0));
+  const left=Math.max(0,LOAN-paid),pct=Math.round(paid/LOAN*100),d=daysLeft();
+  $("left").textContent=money(left);$("fill").style.width=pct+"%";$("paid").textContent=money(paid);
+  $("pct").textContent=pct+"% paid back";
+  $("days").textContent=d>0?d:(d===0?"Today! 🎤":"Done");
+  if(left===0){$("week").textContent="$0.00";$("cheer").textContent="🎉 FULLY PAID! Enjoy the concert — you earned it!"}
+  else if(d<=0){$("week").textContent=money(left);$("cheer").textContent="Almost there — let’s finish it off!"}
+  else{const w=left/Math.max(d/7,1);$("week").textContent=money(w);$("cheer").textContent=cheers[Math.floor(paid)%cheers.length]}
+  $("badges").innerHTML=[[25,"🌱 25%"],[50,"⚡ Halfway"],[75,"🔥 75%"],[100,"🎤 Paid off!"]].map(([p,t])=>`<span class="badge ${pct>=p?"on":""}">${t}</span>`).join("");
+  const sorted=[...jobs].sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.ts||0)-(a.ts||0));
+  $("jobs").innerHTML=sorted.length?sorted.map(j=>`<div class="job"><div class="t">${esc(j.title)}<small>${esc(j.date||"")} · ${j.kind==="cash"?"cash repayment":"job done"}</small></div><span class="amt">−${money(+j.amount||0)}</span><button class="ghost" data-del="${j.id}" title="Remove">✕</button></div>`).join(""):`<div class="empty">No jobs yet — the first one gets the confetti going! 🎊</div>`;
+  renderComs();
+}
+function renderComs(){
+  const days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return ymd(d)});
+  $("coms").innerHTML=coms.length?coms.map(c=>{
+    const on=checks.has(c.id+"_"+today());
+    return `<div class="com"><button class="chk ${on?"on":""}" data-chk="${c.id}" aria-label="Done today">${on?"✓":"○"}</button>
+    <div class="t">${esc(c.text)}<div class="dots">${days.map(d=>`<span class="dot ${checks.has(c.id+"_"+d)?"on":""}"></span>`).join("")}</div></div>
+    ${editing?`<button class="ghost" data-edit="${c.id}">✏️</button><button class="ghost" data-rm="${c.id}">🗑</button>`:""}</div>`}).join(""):`<div class="empty">No commitments yet.</div>`;
+  $("comEdit").hidden=!editing;
+  $("editBtn").hidden=!canEdit;$("editBtn").textContent=editing?"✅ Done editing":"✏️ Edit commitments";
+}
+
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button");if(!t)return;
+  try{
+    if(t.dataset.del&&confirm("Remove this entry?"))await call({action:"delJob",id:t.dataset.del});
+    if(t.dataset.chk){const was=checks.has(t.dataset.chk+"_"+today());await call({action:"toggleCheck",cid:t.dataset.chk,date:today()});if(!was){burst();toast("Commitment kept today! 💚")}}
+    if(t.dataset.rm&&confirm("Delete this commitment?"))await call({action:"delCom",id:t.dataset.rm});
+    if(t.dataset.edit){const c=coms.find(x=>x.id===t.dataset.edit),v=prompt("Edit commitment",c.text);if(v&&v.trim())await call({action:"editCom",id:c.id,text:v.trim()})}
+  }catch(err){}
+});
+$("editBtn").onclick=()=>{editing=!editing;renderComs()};
+$("addc").onclick=async()=>{const v=$("nc").value.trim();if(!v)return;try{await call({action:"addCom",text:v});$("nc").value=""}catch(e){}};
+$("add").onclick=async()=>{
+  const title=$("jt").value.trim(),amount=parseFloat($("ja").value);
+  if(!title||!(amount>0)){toast("Add a job name and an amount 🙂");return}
+  try{await call({action:"addJob",title,amount,date:$("jd").value||today(),kind:$("jk").value});
+    $("jt").value="";$("ja").value="";burst();toast("Nice work! −"+money(amount)+" off the loan 🎉")}catch(e){}
+};
+$("jd").value=today();render();
+if(pin)call().catch(()=>{});else showLock("");
+setInterval(()=>{if(pin&&!document.hidden&&$("lock").hidden)call().catch(()=>{})},15000);
+</script>
+</body>
+</html>
