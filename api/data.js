@@ -1,10 +1,14 @@
 const { Redis } = require("@upstash/redis");
 const crypto = require("crypto");
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN,
-});
+// Find the database variables whatever prefix Vercel gave them (e.g. KV_, STORAGE_, MYDB_).
+function envEnding(...suffixes) {
+  const k = Object.keys(process.env).find((n) => suffixes.some((x) => n.toUpperCase().endsWith(x)) && process.env[n]);
+  return k ? process.env[k] : undefined;
+}
+const DB_URL = envEnding("REST_API_URL", "REDIS_REST_URL");
+const DB_TOKEN = envEnding("REST_API_TOKEN", "REDIS_REST_TOKEN");
+const redis = new Redis({ url: DB_URL, token: DB_TOKEN });
 const KEY = "concert-fund";
 const DEFAULT_COMMITMENTS = [
   "More Effort At School",
@@ -78,8 +82,8 @@ module.exports = async (req, res) => {
   try {
     if (!process.env.ADMIN_PIN && !process.env.APP_PIN)
       return res.status(500).json({ error: "ADMIN_PIN / APP_PIN are not set in Vercel (or you haven't redeployed since adding them)." });
-    if (!(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL))
-      return res.status(500).json({ error: "No database URL found. Connect the Upstash database to this project in Vercel Storage." });
+    if (!DB_URL || !DB_TOKEN)
+      return res.status(500).json({ error: "No database URL/token found (looked for variables ending in REST_API_URL / REST_API_TOKEN). Connect the Upstash database to this project in Vercel Storage." });
     await handler(req, res);
   } catch (e) {
     res.status(500).json({ error: "Server problem: " + (e && e.message ? e.message : e) });
