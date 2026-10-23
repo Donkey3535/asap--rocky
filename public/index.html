@@ -52,6 +52,7 @@ button.ghost{background:transparent;color:var(--accent);border:1px solid var(--l
 .bit{position:fixed;top:45%;left:50%;font-size:1.8rem;pointer-events:none;z-index:60;animation:fly 1.4s ease-out forwards}
 @keyframes fly{to{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
 .lock{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:24px}
+.lock[hidden]{display:none}
 .lock .card{max-width:340px;width:100%;text-align:center}
 </style>
 </head>
@@ -122,7 +123,8 @@ function apply(s){jobs=s.jobs;coms=[...s.commitments].sort((a,b)=>a.order-b.orde
 async function call(body){
   const r=await fetch("/api/data",{method:body?"POST":"GET",headers:{"content-type":"application/json","x-pin":pin},body:body?JSON.stringify(body):undefined});
   if(r.status===401){showLock("That PIN didn’t work");throw new Error("401")}
-  const j=await r.json();if(!r.ok){toast(j.error||"Something went wrong");throw new Error(j.error)}
+  let j;try{j=await r.json()}catch(e){showLock("Server error ("+r.status+"). Check the database and PIN variables in Vercel, then redeploy.");throw e}
+  if(!r.ok){toast(j.error||"Something went wrong");throw new Error(j.error)}
   $("lock").hidden=true;apply(j);return j;
 }
 function showLock(m){$("lock").hidden=false;$("lockmsg").textContent=m||"";$("pin").value="";$("pin").focus()}
