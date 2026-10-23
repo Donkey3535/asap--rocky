@@ -23,7 +23,7 @@ function roleOf(req) {
 const isDate = (d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d);
 const clean = (t) => String(t || "").trim().slice(0, 60);
 
-module.exports = async (req, res) => {
+async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   const role = roleOf(req);
   if (!role) return res.status(401).json({ error: "Wrong or missing PIN" });
@@ -72,4 +72,16 @@ module.exports = async (req, res) => {
     await redis.set(KEY, s);
   }
   res.status(200).json({ ...s, role });
+}
+
+module.exports = async (req, res) => {
+  try {
+    if (!process.env.ADMIN_PIN && !process.env.APP_PIN)
+      return res.status(500).json({ error: "ADMIN_PIN / APP_PIN are not set in Vercel (or you haven't redeployed since adding them)." });
+    if (!(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL))
+      return res.status(500).json({ error: "No database URL found. Connect the Upstash database to this project in Vercel Storage." });
+    await handler(req, res);
+  } catch (e) {
+    res.status(500).json({ error: "Server problem: " + (e && e.message ? e.message : e) });
+  }
 };
